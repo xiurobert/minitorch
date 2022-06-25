@@ -190,8 +190,7 @@ class History:
         Returns:
             list of numbers : a derivative with respect to `inputs`
         """
-        # TODO: Implement for Task 1.4.
-        raise NotImplementedError('Need to implement for Task 1.4')
+        return self.last_fn.chain_rule(self.ctx, self.inputs, d_output)
 
 
 class FunctionBase:
@@ -301,8 +300,30 @@ def topological_sort(variable):
         list of Variables : Non-constant Variables in topological order
                             starting from the right.
     """
-    # TODO: Implement for Task 1.4.
-    raise NotImplementedError('Need to implement for Task 1.4')
+    marks = {} # True if permanently marked, False if temporarily marked
+    topological_order = []
+
+    def visit(var: Variable):
+        if is_constant(var):
+            return
+        if var.unique_id in marks:
+            if marks[var.unique_id]:
+                return
+            if not marks[var.unique_id]:
+                raise ValueError(f"Cyclic graph at {var}")
+
+        marks[var.unique_id] = False
+
+        if var.history and var.history.inputs:
+            for hist_inp_var in var.history.inputs:
+                visit(hist_inp_var)
+
+        marks[var.unique_id] = True
+        topological_order.append(var)
+    visit(variable)
+    return topological_order
+
+
 
 
 def backpropagate(variable, deriv):
@@ -318,5 +339,19 @@ def backpropagate(variable, deriv):
 
     No return. Should write to its results to the derivative values of each leaf through `accumulate_derivative`.
     """
-    # TODO: Implement for Task 1.4.
-    raise NotImplementedError('Need to implement for Task 1.4')
+
+    queued_variables = topological_sort(variable)
+    queued_variables.reverse() # has same result as using a queue
+    derivs = {variable.unique_id: deriv}
+    for v in queued_variables:
+        if v.is_leaf():
+            v.accumulate_derivative(derivs[v.unique_id])
+        elif v.history:
+            origins_and_derivs = v.history.backprop_step(derivs[v.unique_id])
+            for origin, deriv in origins_and_derivs:
+                if origin.unique_id in derivs:
+                    derivs[origin.unique_id] += deriv
+                else:
+                    derivs[origin.unique_id] = deriv
+        else:
+            raise ValueError(f"No history for {v}")
