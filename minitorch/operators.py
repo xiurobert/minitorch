@@ -37,7 +37,7 @@ def lt(x, y):
 
 def eq(x, y):
     ":math:`f(x) =` 1.0 if x is equal to y else 0.0"
-    return 1.0 if x == y else y
+    return 1.0 if x == y else 0.0
 
 
 def max(x, y):
