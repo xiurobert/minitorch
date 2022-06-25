@@ -21,13 +21,15 @@ class Module:
 
     def train(self):
         "Set the mode of this module and all descendent modules to `train`."
-        # TODO: Implement for Task 0.4.
-        raise NotImplementedError('Need to implement for Task 0.4')
+        self.training = True
+        for child in self.modules():
+            child.train()
 
     def eval(self):
         "Set the mode of this module and all descendent modules to `eval`."
-        # TODO: Implement for Task 0.4.
-        raise NotImplementedError('Need to implement for Task 0.4')
+        self.training = False
+        for child in self.modules():
+            child.eval()
 
     def named_parameters(self):
         """
@@ -37,13 +39,24 @@ class Module:
         Returns:
             list of pairs: Contains the name and :class:`Parameter` of each ancestor parameter.
         """
-        # TODO: Implement for Task 0.4.
-        raise NotImplementedError('Need to implement for Task 0.4')
+        results = {}
+        for k, p in self._parameters.items():
+            results[k] = p
+        for mod_name, mod in self._modules.items():
+            for p_name, p in mod.named_parameters():
+                results[f"{mod_name}.{p_name}"] = p
+
+        return results.items()
 
     def parameters(self):
         "Enumerate over all the parameters of this module and its descendents."
-        # TODO: Implement for Task 0.4.
-        raise NotImplementedError('Need to implement for Task 0.4')
+        params = []
+        for p in self._parameters.values():
+            params.append(p)
+
+        for module in self.modules():
+            params += module.parameters()
+        return params
 
     def add_parameter(self, k, v):
         """
