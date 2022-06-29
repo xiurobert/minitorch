@@ -23,9 +23,12 @@ def index_to_position(index, strides):
     Returns:
         int : position in storage
     """
-
-    # TODO: Implement for Task 2.1.
-    raise NotImplementedError('Need to implement for Task 2.1')
+    accumulator = 0
+    for idx, stride in zip(index, strides):
+        accumulator += idx * stride
+    return accumulator
+    # one liner:
+    # return sum([x1 * x2 for x1, x2 in zip(index, strides)])
 
 
 def to_index(ordinal, shape, out_index):
@@ -44,8 +47,11 @@ def to_index(ordinal, shape, out_index):
       None : Fills in `out_index`.
 
     """
-    # TODO: Implement for Task 2.1.
-    raise NotImplementedError('Need to implement for Task 2.1')
+    strides = strides_from_shape(shape)
+    position = ordinal
+    for i in range(len(shape)):
+        out_index[i] = position // strides[i]
+        position = position % strides[i]
 
 
 def broadcast_index(big_index, big_shape, shape, out_index):
@@ -65,8 +71,23 @@ def broadcast_index(big_index, big_shape, shape, out_index):
     Returns:
         None : Fills in `out_index`.
     """
-    # TODO: Implement for Task 2.2.
-    raise NotImplementedError('Need to implement for Task 2.2')
+    # If the shapes are the same, we can just copy the index
+    if big_shape == shape:
+        out_index[:] = big_index
+        return
+    # If the shapes are compatible, we can just copy the index
+    if shape_broadcast(big_shape, shape) == shape:
+        out_index[:] = big_index
+        return
+    # If the shapes are not compatible, we need to map the index
+    # to the smaller shape
+    b_shape = shape_broadcast(big_shape, shape)
+    b_index = [0] * len(b_shape)
+    for i, (idx, s) in enumerate(zip(big_index, big_shape)):
+        b_index[i] = idx % s
+    # Now we need to map the index to the smaller shape
+    for i, (idx, s) in enumerate(zip(b_index, b_shape)):
+        out_index[i] = idx // s
 
 
 def shape_broadcast(shape1, shape2):
@@ -83,8 +104,39 @@ def shape_broadcast(shape1, shape2):
     Raises:
         IndexingError : if cannot broadcast
     """
-    # TODO: Implement for Task 2.2.
-    raise NotImplementedError('Need to implement for Task 2.2')
+    s1 = []
+    s2 = []
+    b_shape = []
+
+    # Add some extra dims of 1 to the shapes to make them the same length
+    if len(shape1) < len(shape2):
+        s1 = [1] * (len(shape2) - len(shape1)) + list(shape1)
+        s2 = shape2
+    elif len(shape1) > len(shape2):
+        s1 = shape1
+        s2 = [1] * (len(shape1) - len(shape2)) + list(shape2)
+    else:
+        s1 = shape1
+        s2 = shape2
+    # If they are equal, obviously they are compatible
+    if [*s1] == [*s2]:
+        return tuple(s1)
+    # If they are not equal, check if they are compatible
+    for i, (dim1, dim2) in enumerate(zip(s1, s2)):
+        if dim1 != dim2:
+            # We can broadcast any dimension of size 1
+            if dim1 == 1:
+                b_shape.append(dim2)
+            elif dim2 == 1:
+                b_shape.append(dim1)
+            # But not if they are not the same
+            else:
+                raise IndexingError(f"Cannot broadcast shapes {shape1} and {shape2}."
+                                    f"Index {i} has dimension {dim1} and {dim2}.")
+        else:
+            # If they are the same, it doesn't really matter, we can just add them
+            b_shape.append(dim1)
+    return tuple(b_shape)
 
 
 def strides_from_shape(shape):
@@ -191,8 +243,10 @@ class TensorData:
             range(len(self.shape))
         ), f"Must give a position to each dimension. Shape: {self.shape} Order: {order}"
 
-        # TODO: Implement for Task 2.1.
-        raise NotImplementedError('Need to implement for Task 2.1')
+        new_shape = tuple(self.shape[i] for i in order)
+        new_strides = tuple(self.strides[i] for i in order)
+        return TensorData(self._storage, new_shape, new_strides)
+        # raise NotImplementedError('Need to implement for Task 2.1')
 
     def to_string(self):
         s = ""

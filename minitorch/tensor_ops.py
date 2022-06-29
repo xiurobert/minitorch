@@ -39,8 +39,11 @@ def tensor_map(fn):
     """
 
     def _map(out, out_shape, out_strides, in_storage, in_shape, in_strides):
-        # TODO: Implement for Task 2.2.
-        raise NotImplementedError('Need to implement for Task 2.2')
+        if list(in_shape) == list(out_shape):
+            for i, fpn in enumerate(in_storage):
+                out[i] = fn(fpn)
+        # # TODO: Implement for Task 2.2.
+        # raise NotImplementedError('Need to implement for Task 2.2')
 
     return _map
 
@@ -130,8 +133,13 @@ def tensor_zip(fn):
         b_shape,
         b_strides,
     ):
-        # TODO: Implement for Task 2.2.
-        raise NotImplementedError('Need to implement for Task 2.2')
+        if list(a_shape) == list(b_shape):
+            out_shape = a_shape
+            out_strides = a_strides
+            for i in range(len(a_storage)):
+                fpn_a = a_storage[i]
+                fpn_b = b_storage[i]
+                out[i] = fn(fpn_a, fpn_b)
 
     return _zip
 
