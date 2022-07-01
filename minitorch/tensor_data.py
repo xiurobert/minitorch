@@ -71,23 +71,9 @@ def broadcast_index(big_index, big_shape, shape, out_index):
     Returns:
         None : Fills in `out_index`.
     """
-    # If the shapes are the same, we can just copy the index
-    if big_shape == shape:
-        out_index[:] = big_index
-        return
-    # If the shapes are compatible, we can just copy the index
-    if shape_broadcast(big_shape, shape) == shape:
-        out_index[:] = big_index
-        return
-    # If the shapes are not compatible, we need to map the index
-    # to the smaller shape
-    b_shape = shape_broadcast(big_shape, shape)
-    b_index = [0] * len(b_shape)
-    for i, (idx, s) in enumerate(zip(big_index, big_shape)):
-        b_index[i] = idx % s
-    # Now we need to map the index to the smaller shape
-    for i, (idx, s) in enumerate(zip(b_index, b_shape)):
-        out_index[i] = idx // s
+    for i in range(len(shape)):
+        offset = i + len(big_shape) - len(shape)
+        out_index[i] = big_index[offset] if shape[i] != 1 else 0
 
 
 def shape_broadcast(shape1, shape2):
