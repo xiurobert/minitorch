@@ -277,7 +277,7 @@ class FunctionBase:
             derivs = list(derivs)
         else:
             derivs = [derivs]
-        assert len(derivs) == len(inputs), "Should have derivatives for each input"
+        # assert len(derivs) == len(inputs), "Should have derivatives for each input"
         return [(v, d) for v, d in zip(inputs, derivs) if not is_constant(v)]
 
 
