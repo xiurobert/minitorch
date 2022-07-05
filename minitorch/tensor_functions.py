@@ -114,7 +114,6 @@ def make_tensor_backend(tensor_ops, is_cuda=False):
             @staticmethod
             def backward(ctx, grad_output):
                 a = ctx.saved_values
-                # d(sigmoid) = sigmoid(x) * (1 - sigmoid(x))
                 return mul_zip(grad_output, mul_zip(sigmoid_map(a), add_zip(tensor([1]), sigmoid_map(a))))
 
         class ReLU(Function):
@@ -211,13 +210,14 @@ def make_tensor_backend(tensor_ops, is_cuda=False):
         class Permute(Function):
             @staticmethod
             def forward(ctx, a, order):
-                # TODO: Implement for Task 2.3.
-                raise NotImplementedError('Need to implement for Task 2.3')
+                reversed_order = [order.index(i) for i in range(len(order))]
+                ctx.save_for_backward(reversed_order)
+                return a.permute(*order)
 
             @staticmethod
             def backward(ctx, grad_output):
-                # TODO: Implement for Task 2.4.
-                raise NotImplementedError('Need to implement for Task 2.4')
+                reversed_order = ctx.saved_values
+                return grad_output.permute(*reversed_order)
 
         class View(Function):
             @staticmethod
