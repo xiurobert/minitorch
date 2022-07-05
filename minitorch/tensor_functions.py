@@ -108,13 +108,16 @@ def make_tensor_backend(tensor_ops, is_cuda=False):
         class Sigmoid(Function):
             @staticmethod
             def forward(ctx, a):
-                ctx.save_for_backward(a)
-                return sigmoid_map(a)
+                sigmoid_a = sigmoid_map(a)
+                ctx.save_for_backward(sigmoid_a)
+                return sigmoid_a
 
             @staticmethod
             def backward(ctx, grad_output):
-                a = ctx.saved_values
-                return mul_zip(grad_output, mul_zip(sigmoid_map(a), add_zip(tensor([1]), sigmoid_map(a))))
+                sigmoid_a = ctx.saved_values
+                return mul_zip(grad_output, mul_zip(sigmoid_a,
+                                                    add_zip(tensor([1.0]),
+                                                            neg_map(sigmoid_a))))
 
         class ReLU(Function):
             @staticmethod
@@ -147,7 +150,7 @@ def make_tensor_backend(tensor_ops, is_cuda=False):
             @staticmethod
             def backward(ctx, grad_output):
                 a = ctx.saved_values
-                return mul_zip(a, grad_output)
+                return mul_zip(exp_map(a), grad_output)
 
         class Sum(Function):
             @staticmethod
@@ -209,15 +212,16 @@ def make_tensor_backend(tensor_ops, is_cuda=False):
 
         class Permute(Function):
             @staticmethod
-            def forward(ctx, a, order):
+            def forward(ctx, a: Tensor, order):
                 reversed_order = [order.index(i) for i in range(len(order))]
                 ctx.save_for_backward(reversed_order)
-                return a.permute(*order)
+                result = Tensor.make(a._tensor._storage, a.shape, backend=a.backend)
+                return Tensor(result._tensor.permute(*order), backend=result.backend)
 
             @staticmethod
             def backward(ctx, grad_output):
                 reversed_order = ctx.saved_values
-                return grad_output.permute(*reversed_order)
+                return Tensor(grad_output._tensor.permute(*reversed_order), backend=grad_output.backend)
 
         class View(Function):
             @staticmethod
