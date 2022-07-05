@@ -217,19 +217,19 @@ def tensor_reduce(fn):
 
     def _reduce(out, out_shape, out_strides, a_storage, a_shape, a_strides, reduce_dim):
         index = np.array(out_shape)
-        reduce_size = out_shape[reduce_dim]
-        a_shape[reduce_dim] = 1
-        a_strides[reduce_dim] = 0
-        reduce_shape = a_shape
-        offset = reduce_shape
-        for p in range(len(out)):
-            to_index(p, out_shape, index)
-            k = index_to_position(index, out_strides)
-            for s in range(reduce_size):
-                to_index(s, reduce_shape, offset)
+        reduce_size = a_shape[reduce_dim]
+        reduce_shape = [1] * len(a_shape)
+        reduce_shape[reduce_dim] = reduce_size
+        reduce_shape = tuple(reduce_shape)
+        offset = np.array(reduce_shape)
+        for out_data_point in range(len(out)):
+            to_index(out_data_point, out_shape, index)
+            out_pos = index_to_position(index, out_strides)
+            for reduce_idx in range(reduce_size):
+                to_index(reduce_idx, reduce_shape, offset)
                 a_index = index + offset
-                out[k] = fn(
-                    out[k], a_storage[index_to_position(a_index, a_strides)])
+                out[out_pos] = fn(
+                    out[out_pos], a_storage[index_to_position(a_index, a_strides)])
 
     return _reduce
 
